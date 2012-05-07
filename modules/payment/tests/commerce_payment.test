@@ -1,0 +1,62 @@
+<?php
+
+/**
+ * @file
+ * Functional tests for the commerce payment module user interface.
+ */
+
+/**
+ * Test payment API.
+ */
+class CommercePaymentTest extends CommerceBaseTestCase {
+  /**
+   * Order object.
+   */
+  protected $order;
+
+  /**
+   * Implementation of getInfo().
+   */
+  public static function getInfo() {
+    return array(
+      'name' => 'Payment',
+      'description' => 'Test the payment API',
+      'group' => 'Drupal Commerce',
+    );
+  }
+
+  /**
+   * Implementation of setUp().
+   */
+  function setUp() {
+    $modules = parent::setUpHelper('all');
+    parent::setUp($modules);
+
+    $product = $this->createDummyProduct('PROD-01', 'Product One', 100, 'USD', $uid);
+    $products[$product->product_id] = 1;
+
+    $this->order = $this->createDummyOrder(1, $products);
+    debug($this->order);
+
+  }
+
+  /**
+   * Tests the paid in full hook invocation.
+   */
+  function testPaidInFull() {
+    // Create a payment, should not execute the paid in full hook.
+    $payment_methods = commerce_payment_methods();
+    $payment_method = reset($payment_methods);
+    commerce_payment_example_transaction($payment_method, $this->order, array('amount' => 50, 'currency_code' => 'USD'), 'Test');
+    $this->assertTrue(empty($order->data['commerce_payment_order_paid_in_full_invoked']), 'Paid in full not yet invoked');
+
+    // Create a second payment, this should invoke the hook.
+    commerce_payment_example_transaction($payment_method, $this->order, array('amount' => 50, 'currency_code' => 'USD'), 'Test 2');
+    $this->assertFalse(empty($order->data['commerce_payment_order_paid_in_full_invoked']));
+
+
+
+    // @todo: Actually test that the hook is executed exactly once.
+  }
+
+}
