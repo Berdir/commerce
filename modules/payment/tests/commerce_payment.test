@@ -45,14 +45,20 @@ class CommercePaymentTest extends CommerceBaseTestCase {
    */
   function testPaidInFull() {
     // Create a payment, should not execute the paid in full hook.
-    $payment_methods = commerce_payment_methods();
-    $payment_method = reset($payment_methods);
+    // Invoke the payment methods event that will populate the order with
+    // an array of method IDs for available payment methods.
+    $this->order->payment_methods = array();
+    rules_invoke_all('commerce_payment_methods', $this->order);
+
+    // Sort the payment methods array by the enabling Rules' weight values.
+    uasort($this->order->payment_methods, 'drupal_sort_weight');
+    $payment_method = reset($this->order->payment_methods);
     commerce_payment_example_transaction($payment_method, $this->order, array('amount' => 50, 'currency_code' => 'USD'), 'Test');
-    $this->assertTrue(empty($order->data['commerce_payment_order_paid_in_full_invoked']), 'Paid in full not yet invoked');
+    $this->assertTrue(empty($this->order->data['commerce_payment_order_paid_in_full_invoked']), 'Paid in full not yet invoked');
 
     // Create a second payment, this should invoke the hook.
     commerce_payment_example_transaction($payment_method, $this->order, array('amount' => 50, 'currency_code' => 'USD'), 'Test 2');
-    $this->assertFalse(empty($order->data['commerce_payment_order_paid_in_full_invoked']));
+    $this->assertFalse(empty($this->order->data['commerce_payment_order_paid_in_full_invoked']));
 
 
 
